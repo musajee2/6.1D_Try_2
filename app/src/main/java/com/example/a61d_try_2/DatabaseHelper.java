@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     // Database Name
@@ -15,6 +16,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // Table Names
     private static final String TABLE_USERS = "users";
     private static final String TABLE_PLAYLIST = "playlist";
+    private static final String TABLE_QUIZ_ATTEMPTS = "quiz_attempts";
 
     // Common column names
     private static final String KEY_ID = "id";
@@ -26,6 +28,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     // Playlist Table - column names
     private static final String KEY_YOUTUBE_URL = "youtube_url";
+
+    // Quiz Attempts Table - column names
+    private static final String KEY_USER_ID = "user_id";
+    private static final String KEY_QUIZ_TOPIC = "quiz_topic";
+    private static final String KEY_TOTAL_QUESTIONS = "total_questions";
+    private static final String KEY_CORRECT_ANSWERS = "correct_answers";
+    private static final String KEY_COMPLETED = "completed";
 
     // Table Create Statements
     private static final String CREATE_TABLE_USERS = "CREATE TABLE " + TABLE_USERS +
@@ -42,6 +51,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             KEY_YOUTUBE_URL + " TEXT" +
             ")";
 
+    private static final String CREATE_TABLE_QUIZ_ATTEMPTS = "CREATE TABLE " + TABLE_QUIZ_ATTEMPTS +
+            "(" +
+            KEY_ID + " INTEGER PRIMARY KEY," +
+            KEY_USER_ID + " INTEGER," +
+            KEY_QUIZ_TOPIC + " TEXT," +
+            KEY_TOTAL_QUESTIONS + " INTEGER," +
+            KEY_CORRECT_ANSWERS + " INTEGER," +
+            KEY_COMPLETED + " INTEGER," +
+            "FOREIGN KEY(" + KEY_USER_ID + ") REFERENCES " + TABLE_USERS + "(" + KEY_ID + ")" +
+            ")";
+
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, 1);
     }
@@ -51,6 +71,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         // creating required tables
         db.execSQL(CREATE_TABLE_USERS);
         db.execSQL(CREATE_TABLE_PLAYLIST);
+        db.execSQL(CREATE_TABLE_QUIZ_ATTEMPTS);
     }
 
     @Override
@@ -58,12 +79,23 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         // on upgrade drop older tables
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_USERS);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_PLAYLIST);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_QUIZ_ATTEMPTS);
 
         // create new tables
         onCreate(db);
     }
 
-    // Adding new user
+    // Method to reset the database
+    public void resetDatabase() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_USERS);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_PLAYLIST);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_QUIZ_ATTEMPTS);
+        onCreate(db);
+        db.close();
+    }
+
+    // Adding a new user
     public long addUser(User user) {
         SQLiteDatabase db = this.getWritableDatabase();
 
@@ -76,6 +108,35 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         long id = db.insert(TABLE_USERS, null, values);
         db.close();
         return id;
+    }
+
+    // Adding new quiz attempt
+    public long addQuizAttempt(int userId, String quizTopic, int totalQuestions, int correctAnswers, boolean completed) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(KEY_USER_ID, userId);
+        values.put(KEY_QUIZ_TOPIC, quizTopic);
+        values.put(KEY_TOTAL_QUESTIONS, totalQuestions);
+        values.put(KEY_CORRECT_ANSWERS, correctAnswers);
+        values.put(KEY_COMPLETED, completed ? 1 : 0);
+
+        // insert row
+        long id = db.insert(TABLE_QUIZ_ATTEMPTS, null, values);
+        db.close();
+        return id;
+    }
+
+    // Updating quiz attempt
+    public void updateQuizAttempt(long attemptId, int score, boolean completed) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(KEY_CORRECT_ANSWERS, score);
+        values.put(KEY_COMPLETED, completed ? 1 : 0);
+
+        db.update(TABLE_QUIZ_ATTEMPTS, values, KEY_ID + " = ?", new String[]{String.valueOf(attemptId)});
+        db.close();
     }
 
     // Method to check if a user with the given email exists in the database
@@ -103,14 +164,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return cursorCount > 0;
     }
 
-    // Method to add YouTube URL to playlist
-    public void addToPlaylist(String youtubeUrl) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put(KEY_YOUTUBE_URL, youtubeUrl);
-        db.insert(TABLE_PLAYLIST, null, values);
-        db.close();
-    }
+    // Method to retrieve a user by email
     public User getUser(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
         User user = null;
@@ -153,34 +207,38 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return user;
     }
 
-    public ArrayList<String> getPlaylist() {
-        ArrayList<String> playlist = new ArrayList<>();
+    public List<QuizAttempt> getQuizAttempts(int userId) {
+        List<QuizAttempt> attempts = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
-        String[] columns = {KEY_YOUTUBE_URL};
-
         Cursor cursor = db.query(
-                TABLE_PLAYLIST,     // The table to query
-                columns,            // The array of columns to return (null to return all)
-                null,               // The columns for the WHERE clause
-                null,               // The values for the WHERE clause
-                null,               // don't group the rows
-                null,               // don't filter by row groups
-                null                // The sort order
+                TABLE_QUIZ_ATTEMPTS,
+                null,
+                KEY_USER_ID + " = ?",
+                new String[]{String.valueOf(userId)},
+                null,
+                null,
+                null
         );
 
-        // Loop through all rows and add them to the playlist ArrayList
         if (cursor.moveToFirst()) {
             do {
-                String youtubeUrl = cursor.getString(cursor.getColumnIndex(KEY_YOUTUBE_URL));
-                playlist.add(youtubeUrl);
+                int id = cursor.getInt(cursor.getColumnIndex(KEY_ID));
+                String quizTopic = cursor.getString(cursor.getColumnIndex(KEY_QUIZ_TOPIC));
+                int totalQuestions = cursor.getInt(cursor.getColumnIndex(KEY_TOTAL_QUESTIONS));
+                int correctAnswers = cursor.getInt(cursor.getColumnIndex(KEY_CORRECT_ANSWERS));
+                boolean completed = cursor.getInt(cursor.getColumnIndex(KEY_COMPLETED)) == 1;
+
+                QuizAttempt attempt = new QuizAttempt(id, userId, quizTopic, totalQuestions, correctAnswers, completed);
+                attempts.add(attempt);
             } while (cursor.moveToNext());
         }
 
         cursor.close();
         db.close();
-        return playlist;
+        return attempts;
     }
 
-    // More methods can be added for database operations as needed
+
+    // More methods for database operations
 }

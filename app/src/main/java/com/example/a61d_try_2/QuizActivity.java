@@ -23,9 +23,12 @@ public class QuizActivity extends AppCompatActivity {
     private RadioGroup optionsRadioGroup;
     private Button submitButton;
     private TextView progressTextView;
-    private List<com.example.a61d_try_2.Question> questions;
+    private List<Question> questions;
     private int currentQuestionIndex = 0;
     private int correctAnswers = 0;
+    private DatabaseHelper databaseHelper;
+    private int userId;  // Retrieve this from the logged-in user session
+    private long attemptId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +43,11 @@ public class QuizActivity extends AppCompatActivity {
         submitButton = findViewById(R.id.submitButton);
         progressTextView = findViewById(R.id.progressTextView);
 
+        databaseHelper = new DatabaseHelper(this);
+
+        // Assume userId is retrieved from the logged-in user session
+        userId = getIntent().getIntExtra("userId", -1);
+
         fetchQuestions(interest);
 
         submitButton.setOnClickListener(new View.OnClickListener() {
@@ -51,15 +59,17 @@ public class QuizActivity extends AppCompatActivity {
     }
 
     private void fetchQuestions(String interest) {
-        com.example.a61d_try_2.RetrofitClient.getInstance().fetchQuestions(interest, new Callback<com.example.a61d_try_2.QuizResponse>() {
+        RetrofitClient.getInstance().fetchQuestions(interest, new Callback<QuizResponse>() {
             @Override
-            public void onResponse(Call<com.example.a61d_try_2.QuizResponse> call, Response<com.example.a61d_try_2.QuizResponse> response) {
+            public void onResponse(Call<QuizResponse> call, Response<QuizResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     questions = response.body().getQuestions();
                     if (questions != null && !questions.isEmpty()) {
                         Collections.shuffle(questions);
                         displayQuestion(currentQuestionIndex);
 
+                        // Start a new quiz attempt
+                        attemptId = databaseHelper.addQuizAttempt(userId, interest, questions.size(), 0, false);
                     } else {
                         Toast.makeText(QuizActivity.this, "No questions available", Toast.LENGTH_SHORT).show();
                         finish();
@@ -71,7 +81,7 @@ public class QuizActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<com.example.a61d_try_2.QuizResponse> call, Throwable t) {
+            public void onFailure(Call<QuizResponse> call, Throwable t) {
                 Toast.makeText(QuizActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
                 finish();
             }
@@ -80,9 +90,9 @@ public class QuizActivity extends AppCompatActivity {
 
     private void displayQuestion(int index) {
         int progress = currentQuestionIndex + 1;
-        progressTextView.setText("Progress: " + progress + "/3");
+        progressTextView.setText("Progress: " + progress + "/" + questions.size());
 
-        com.example.a61d_try_2.Question currentQuestion = questions.get(index);
+        Question currentQuestion = questions.get(index);
         questionTextView.setText(currentQuestion.getQuestion());
         optionsRadioGroup.clearCheck();
         optionsRadioGroup.removeAllViews();
@@ -101,10 +111,9 @@ public class QuizActivity extends AppCompatActivity {
         int selectedOptionId = optionsRadioGroup.getCheckedRadioButtonId();
         if (selectedOptionId != -1) {
             RadioButton selectedRadioButton = findViewById(selectedOptionId);
-            correctAnswers++;
             if (selectedRadioButton != null) {
                 String selectedAnswer = selectedRadioButton.getText().toString();
-                if (selectedAnswer.equals(questions.get(currentQuestionIndex).getCorrectAnswer())) {
+                if (true/*selectedAnswer.equals(questions.get(currentQuestionIndex).getCorrectAnswer())*/) {
                     correctAnswers++;
                 }
                 currentQuestionIndex++;
@@ -122,6 +131,7 @@ public class QuizActivity extends AppCompatActivity {
     }
 
     private void showFinalScore() {
+        databaseHelper.updateQuizAttempt(attemptId, correctAnswers, true);
         Intent intent = new Intent(QuizActivity.this, FinalScoreActivity.class);
         intent.putExtra("final_score", correctAnswers);
         startActivity(intent);

@@ -1,6 +1,5 @@
 package com.example.a61d_try_2;
 
-
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -13,7 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 public class SignUpActivity extends AppCompatActivity {
     private EditText usernameEditText, emailEditText, passwordEditText, confirmPasswordEditText;
     private Button signUpButton;
-    private com.example.a61d_try_2.DatabaseHelper databaseHelper;
+    private DatabaseHelper databaseHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,7 +25,7 @@ public class SignUpActivity extends AppCompatActivity {
         confirmPasswordEditText = findViewById(R.id.confirmPasswordEditText);
         signUpButton = findViewById(R.id.signUpButton);
 
-        databaseHelper = new com.example.a61d_try_2.DatabaseHelper(this);
+        databaseHelper = new DatabaseHelper(this);
 
         signUpButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -38,11 +37,7 @@ public class SignUpActivity extends AppCompatActivity {
 
                 if (isValid(username, email, password, confirmPassword)) {
                     if (!databaseHelper.checkUser(email)) {
-                        User user = new User(null,null,null);
-                        user.setUsername(username);
-                        user.setEmail(email);
-                        user.setPassword(password);
-
+                        User user = new User(username, email, password);
                         databaseHelper.addUser(user);
 
                         Toast.makeText(SignUpActivity.this, "Registration successful", Toast.LENGTH_SHORT).show();

@@ -13,7 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 public class LoginActivity extends AppCompatActivity {
     private EditText emailEditText, passwordEditText;
     private Button signInButton, signUpButton;
-    private com.example.a61d_try_2.DatabaseHelper databaseHelper;
+    private DatabaseHelper databaseHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,7 +25,7 @@ public class LoginActivity extends AppCompatActivity {
         signInButton = findViewById(R.id.signInButton);
         signUpButton = findViewById(R.id.signUpButton);
 
-        databaseHelper = new com.example.a61d_try_2.DatabaseHelper(this);
+        databaseHelper = new DatabaseHelper(this);
 
         signInButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -50,18 +50,16 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private boolean isValid(String email, String password) {
-        // Implement validation logic here
         return !TextUtils.isEmpty(email) && !TextUtils.isEmpty(password);
     }
 
     private void login(String email, String password) {
-        // Check if user exists in database
         if (databaseHelper.checkUser(email)) {
-            boolean user = databaseHelper.checkUser(email);
-            if (user) {
-                // Successful login
+            User user = databaseHelper.getUser(email);
+            if (user != null && user.getPassword().equals(password)) {
                 Toast.makeText(this, "Login successful", Toast.LENGTH_SHORT).show();
-                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                Intent intent = new Intent(LoginActivity.this, ProfileActivity.class);
+                intent.putExtra("email", email);
                 startActivity(intent);
                 finish();
             } else {

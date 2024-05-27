@@ -8,7 +8,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Username"
-        android:layout_margin="16dp"/>
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"/>
 
     <EditText
         android:id="@+id/emailEditText"
@@ -16,23 +18,31 @@
         android:layout_height="wrap_content"
         android:hint="Email"
         android:layout_below="@id/usernameEditText"
-        android:layout_margin="16dp"/>
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"/>
 
     <EditText
         android:id="@+id/passwordEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Password"
+        android:inputType="textPassword"
         android:layout_below="@id/emailEditText"
-        android:layout_margin="16dp"/>
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"/>
 
     <EditText
         android:id="@+id/confirmPasswordEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Confirm Password"
+        android:inputType="textPassword"
         android:layout_below="@id/passwordEditText"
-        android:layout_margin="16dp"/>
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"/>
 
     <Button
         android:id="@+id/signUpButton"
@@ -40,7 +50,6 @@
         android:layout_height="wrap_content"
         android:text="Sign Up"
         android:layout_below="@id/confirmPasswordEditText"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="24dp"/>
-
+        android:layout_marginTop="16dp"
+        android:layout_centerHorizontal="true"/>
 </RelativeLayout>

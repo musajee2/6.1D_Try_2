@@ -29,6 +29,8 @@
         <activity android:name=".MainActivity" />
         <activity android:name=".QuizActivity" />
         <activity android:name=".FinalScoreActivity" />
+        <activity android:name=".ProfileActivity"></activity>
+        <activity android:name=".UpgradeActivity"></activity>
 
     </application>
 
