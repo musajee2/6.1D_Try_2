@@ -16,6 +16,7 @@ public class ProfileActivity extends AppCompatActivity {
     private Button generateQuizButton, upgradeButton, shareButton;
     private DatabaseHelper databaseHelper;
     private User user;
+    private String email;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,7 +35,41 @@ public class ProfileActivity extends AppCompatActivity {
         databaseHelper = new DatabaseHelper(this);
 
         Intent intent = getIntent();
-        String email = intent.getStringExtra("email");
+        email = intent.getStringExtra("email");
+
+        generateQuizButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(ProfileActivity.this, MainActivity.class);
+                intent.putExtra("userId", user.getId());
+                intent.putExtra("email", email);
+                startActivity(intent);
+            }
+        });
+
+        upgradeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(ProfileActivity.this, UpgradeActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        shareButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                shareProfile();
+            }
+        });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadData();
+    }
+
+    private void loadData() {
         user = databaseHelper.getUser(email);
 
         if (user != null) {
@@ -54,30 +89,6 @@ public class ProfileActivity extends AppCompatActivity {
         } else {
             Toast.makeText(this, "User not found", Toast.LENGTH_SHORT).show();
         }
-
-        generateQuizButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(ProfileActivity.this, MainActivity.class);
-                intent.putExtra("userId", user.getId());
-                startActivity(intent);
-            }
-        });
-
-        upgradeButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(ProfileActivity.this, UpgradeActivity.class);
-                startActivity(intent);
-            }
-        });
-
-        shareButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                shareProfile();
-            }
-        });
     }
 
     private void shareProfile() {

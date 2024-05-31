@@ -27,8 +27,9 @@ public class QuizActivity extends AppCompatActivity {
     private int currentQuestionIndex = 0;
     private int correctAnswers = 0;
     private DatabaseHelper databaseHelper;
-    private int userId;  // Retrieve this from the logged-in user session
+    private int userId;
     private long attemptId;
+    private String email;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +38,8 @@ public class QuizActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         String interest = intent.getStringExtra("interest");
+        email = intent.getStringExtra("email");
+        userId = intent.getIntExtra("userId", -1);
 
         questionTextView = findViewById(R.id.questionTextView);
         optionsRadioGroup = findViewById(R.id.optionsRadioGroup);
@@ -44,9 +47,6 @@ public class QuizActivity extends AppCompatActivity {
         progressTextView = findViewById(R.id.progressTextView);
 
         databaseHelper = new DatabaseHelper(this);
-
-        // Assume userId is retrieved from the logged-in user session
-        userId = getIntent().getIntExtra("userId", -1);
 
         fetchQuestions(interest);
 
@@ -68,7 +68,6 @@ public class QuizActivity extends AppCompatActivity {
                         Collections.shuffle(questions);
                         displayQuestion(currentQuestionIndex);
 
-                        // Start a new quiz attempt
                         attemptId = databaseHelper.addQuizAttempt(userId, interest, questions.size(), 0, false);
                     } else {
                         Toast.makeText(QuizActivity.this, "No questions available", Toast.LENGTH_SHORT).show();
@@ -113,7 +112,8 @@ public class QuizActivity extends AppCompatActivity {
             RadioButton selectedRadioButton = findViewById(selectedOptionId);
             if (selectedRadioButton != null) {
                 String selectedAnswer = selectedRadioButton.getText().toString();
-                if (true/*selectedAnswer.equals(questions.get(currentQuestionIndex).getCorrectAnswer())*/) {
+                correctAnswers++;
+                if (selectedAnswer.equals(questions.get(currentQuestionIndex).getCorrectAnswer())) {
                     correctAnswers++;
                 }
                 currentQuestionIndex++;
@@ -134,6 +134,7 @@ public class QuizActivity extends AppCompatActivity {
         databaseHelper.updateQuizAttempt(attemptId, correctAnswers, true);
         Intent intent = new Intent(QuizActivity.this, FinalScoreActivity.class);
         intent.putExtra("final_score", correctAnswers);
+        intent.putExtra("email", email);
         startActivity(intent);
         finish();
     }

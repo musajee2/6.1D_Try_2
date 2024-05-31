@@ -8,11 +8,11 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-
 public class FinalScoreActivity extends AppCompatActivity {
     private TextView finalScoreTextView;
     private Button takeNewQuizButton;
     private Button finishButton;
+    private String email;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,12 +24,14 @@ public class FinalScoreActivity extends AppCompatActivity {
         finishButton = findViewById(R.id.finishButton);
 
         int finalScore = getIntent().getIntExtra("final_score", 0);
+        email = getIntent().getStringExtra("email");
         finalScoreTextView.setText("Your final score is: " + finalScore);
 
         takeNewQuizButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(FinalScoreActivity.this, MainActivity.class);
+                intent.putExtra("email", email);
                 startActivity(intent);
                 finish();
             }
@@ -38,6 +40,10 @@ public class FinalScoreActivity extends AppCompatActivity {
         finishButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Intent intent = new Intent(FinalScoreActivity.this, ProfileActivity.class);
+                intent.putExtra("email", email);
+                intent.putExtra("final_score", finalScore);
+                startActivity(intent);
                 finish();
             }
         });

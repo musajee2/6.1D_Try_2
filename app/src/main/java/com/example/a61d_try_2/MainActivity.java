@@ -8,12 +8,11 @@ import android.widget.EditText;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.a61d_try_2.QuizActivity;
-import com.example.a61d_try_2.R;
-
 public class MainActivity extends AppCompatActivity {
     private EditText nameEditText;
     private Button startQuizButton;
+    private String email;
+    private int userId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,12 +22,18 @@ public class MainActivity extends AppCompatActivity {
         nameEditText = findViewById(R.id.nameEditText);
         startQuizButton = findViewById(R.id.startQuizButton);
 
+        Intent intent = getIntent();
+        email = intent.getStringExtra("email");
+        userId = intent.getIntExtra("userId", -1);
+
         startQuizButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String interest = nameEditText.getText().toString();
                 Intent intent = new Intent(MainActivity.this, QuizActivity.class);
                 intent.putExtra("interest", interest);
+                intent.putExtra("email", email);
+                intent.putExtra("userId", userId);
                 startActivity(intent);
             }
         });
